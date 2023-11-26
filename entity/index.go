@@ -7,13 +7,12 @@ import (
 
 type Task struct {
 	gorm.Model
-	Name     string
-	Schedule int64
-	History  []TaskHistory
+	Name    string
+	History []TaskHistory
 }
 
 type TaskHistory struct {
 	gorm.Model
-	DoneAt time.Time
-	TaskID uint
+	CompletedAt time.Time
+	TaskID      uint
 }

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"recurringly-backend/dto"
 	"recurringly-backend/entity"
+	"recurringly-backend/util"
 	"time"
 )
 
@@ -24,7 +25,7 @@ func (c TasksController) GetTasks(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&tasks)
+	json.NewEncoder(w).Encode(util.TasksToApiModel(tasks))
 }
 
 func (c TasksController) GetTask(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +39,7 @@ func (c TasksController) GetTask(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&task)
+	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
 }
 
 func (c TasksController) CreateTask(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +52,7 @@ func (c TasksController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task := entity.Task{
-		Name:     request.Name,
-		Schedule: request.Schedule,
+		Name: request.Name,
 	}
 	err = c.Database.Create(&task).Error
 	if err != nil {
@@ -62,7 +62,7 @@ func (c TasksController) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(&task)
+	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
 }
 
 func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
@@ -75,8 +75,8 @@ func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	taskHistoryEntry := entity.TaskHistory{
-		TaskID: request.ID,
-		DoneAt: time.Now(),
+		TaskID:      request.ID,
+		CompletedAt: time.Now(),
 	}
 	err = c.Database.Create(&taskHistoryEntry).Error
 	if err != nil {
@@ -86,5 +86,5 @@ func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&taskHistoryEntry)
+	json.NewEncoder(w).Encode(util.TaskHistoryToApiModel(taskHistoryEntry))
 }
