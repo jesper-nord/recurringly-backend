@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"io"
@@ -74,8 +75,13 @@ func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	taskId, err := uuid.Parse(request.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	taskHistoryEntry := entity.TaskHistory{
-		TaskID:      request.ID,
+		TaskID:      taskId,
 		CompletedAt: time.Now(),
 	}
 	err = c.Database.Create(&taskHistoryEntry).Error
@@ -87,4 +93,16 @@ func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(util.TaskHistoryToApiModel(taskHistoryEntry))
+}
+
+func (c TasksController) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	taskId, err := uuid.Parse(params["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	c.Database.Delete(&entity.Task{}, taskId)
+	w.WriteHeader(http.StatusOK)
 }

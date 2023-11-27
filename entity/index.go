@@ -1,18 +1,26 @@
 package entity
 
 import (
-	"gorm.io/gorm"
+	"database/sql"
+	"github.com/google/uuid"
 	"time"
 )
 
+type Model struct {
+	ID        uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime `gorm:"index"`
+}
+
 type Task struct {
-	gorm.Model
+	Model
 	Name    string
 	History []TaskHistory
 }
 
 type TaskHistory struct {
-	gorm.Model
+	Model
 	CompletedAt time.Time
-	TaskID      uint
+	TaskID      uuid.UUID
 }
