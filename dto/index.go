@@ -3,9 +3,9 @@ package dto
 import "time"
 
 type Task struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	History []TaskHistory
+	ID      string        `json:"id"`
+	Name    string        `json:"name"`
+	History []TaskHistory `json:"history"`
 }
 
 type TaskHistory struct {
