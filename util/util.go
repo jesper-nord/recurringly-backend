@@ -6,7 +6,7 @@ import (
 )
 
 func TasksToApiModel(tasks []entity.Task) []dto.Task {
-	result := make([]dto.Task, len(tasks))
+	result := make([]dto.Task, 0)
 	for _, task := range tasks {
 		result = append(result, TaskToApiModel(task))
 	}
@@ -22,7 +22,7 @@ func TaskToApiModel(task entity.Task) dto.Task {
 }
 
 func taskHistoriesToApiModel(history []entity.TaskHistory) []dto.TaskHistory {
-	result := make([]dto.TaskHistory, len(history))
+	result := make([]dto.TaskHistory, 0)
 	for _, th := range history {
 		result = append(result, TaskHistoryToApiModel(th))
 	}
