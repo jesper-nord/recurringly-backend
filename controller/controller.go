@@ -31,9 +31,13 @@ func (c TasksController) GetTasks(w http.ResponseWriter, r *http.Request) {
 
 func (c TasksController) GetTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	id := params["id"]
+	taskId, err := uuid.Parse(params["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	var task entity.Task
-	err := c.Database.Model(&entity.Task{}).Preload("History").Find(&task, id).Error
+	err = c.Database.Model(&entity.Task{}).Preload("History").Find(&task, taskId).Error
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
