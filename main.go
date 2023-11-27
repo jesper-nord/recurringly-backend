@@ -38,7 +38,7 @@ func main() {
 	router.HandleFunc("/tasks", ctrl.GetTasks).Methods("GET")
 	router.HandleFunc("/tasks/{id}", ctrl.GetTask).Methods("GET")
 	router.HandleFunc("/tasks", ctrl.CreateTask).Methods("POST")
-	router.HandleFunc("/tasks", ctrl.CompleteTask).Methods("PUT")
+	router.HandleFunc("/tasks/{id}", ctrl.CompleteTask).Methods("PUT")
 	router.HandleFunc("/tasks/{id}", ctrl.DeleteTask).Methods("DELETE")
 
 	handler := cors.Default().Handler(router)

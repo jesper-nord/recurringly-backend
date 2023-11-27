@@ -16,7 +16,3 @@ type TaskHistory struct {
 type CreateTaskRequest struct {
 	Name string `json:"name"`
 }
-
-type CompleteTaskRequest struct {
-	ID string `json:"id"`
-}

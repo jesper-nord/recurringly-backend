@@ -71,15 +71,8 @@ func (c TasksController) CreateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
-	var request dto.CompleteTaskRequest
-	body, _ := io.ReadAll(r.Body)
-	err := json.Unmarshal(body, &request)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	taskId, err := uuid.Parse(request.ID)
+	params := mux.Vars(r)
+	taskId, err := uuid.Parse(params["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
