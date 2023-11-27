@@ -36,8 +36,7 @@ func (c TasksController) GetTask(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var task entity.Task
-	err = c.Database.Model(&entity.Task{}).Preload("History").Find(&task, taskId).Error
+	task, err := c.getTask(taskId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -77,11 +76,14 @@ func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	taskHistoryEntry := entity.TaskHistory{
-		TaskID:      taskId,
-		CompletedAt: time.Now(),
+	task, err := c.getTask(taskId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
-	err = c.Database.Create(&taskHistoryEntry).Error
+	err = c.Database.Model(&task).Association("History").Append(&entity.TaskHistory{
+		CompletedAt: time.Now(),
+	})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -89,7 +91,7 @@ func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(util.TaskHistoryToApiModel(taskHistoryEntry))
+	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
 }
 
 func (c TasksController) DeleteTask(w http.ResponseWriter, r *http.Request) {
@@ -102,4 +104,10 @@ func (c TasksController) DeleteTask(w http.ResponseWriter, r *http.Request) {
 
 	c.Database.Delete(&entity.Task{}, taskId)
 	w.WriteHeader(http.StatusOK)
+}
+
+func (c TasksController) getTask(taskId uuid.UUID) (entity.Task, error) {
+	var task entity.Task
+	err := c.Database.Model(&entity.Task{}).Preload("History").Find(&task, taskId).Error
+	return task, err
 }
