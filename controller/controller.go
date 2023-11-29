@@ -120,6 +120,6 @@ func (c TasksController) DeleteTaskHistory(w http.ResponseWriter, r *http.Reques
 
 func (c TasksController) getTask(taskId uuid.UUID) (entity.Task, error) {
 	var task entity.Task
-	err := c.Database.Model(&entity.Task{}).Preload("History").Find(&task, taskId).Error
+	err := c.Database.Model(&entity.Task{}).Preload("History").Take(&task, taskId).Error
 	return task, err
 }
