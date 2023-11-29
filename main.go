@@ -40,6 +40,7 @@ func main() {
 	router.HandleFunc("/tasks", ctrl.CreateTask).Methods("POST")
 	router.HandleFunc("/tasks/{id}", ctrl.CompleteTask).Methods("PUT")
 	router.HandleFunc("/tasks/{id}", ctrl.DeleteTask).Methods("DELETE")
+	router.HandleFunc("/tasks/history/{id}", ctrl.DeleteTaskHistory).Methods("DELETE")
 
 	handler := cors.Default().Handler(router)
 	log.Fatal(http.ListenAndServe(":8090", handler))

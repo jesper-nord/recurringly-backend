@@ -106,6 +106,18 @@ func (c TasksController) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (c TasksController) DeleteTaskHistory(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	taskHistoryId, err := uuid.Parse(params["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	c.Database.Delete(&entity.TaskHistory{}, taskHistoryId)
+	w.WriteHeader(http.StatusOK)
+}
+
 func (c TasksController) getTask(taskId uuid.UUID) (entity.Task, error) {
 	var task entity.Task
 	err := c.Database.Model(&entity.Task{}).Preload("History").Find(&task, taskId).Error

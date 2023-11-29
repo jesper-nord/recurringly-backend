@@ -3,6 +3,7 @@ package util
 import (
 	"recurringly-backend/dto"
 	"recurringly-backend/entity"
+	"sort"
 )
 
 func TasksToApiModel(tasks []entity.Task) []dto.Task {
@@ -26,6 +27,10 @@ func taskHistoriesToApiModel(history []entity.TaskHistory) []dto.TaskHistory {
 	for _, th := range history {
 		result = append(result, TaskHistoryToApiModel(th))
 	}
+	// sort by completion date, descending
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].CompletedAt.After(result[j].CompletedAt)
+	})
 	return result
 }
 
