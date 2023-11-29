@@ -13,11 +13,11 @@ import (
 	"time"
 )
 
-type TasksController struct {
+type TaskController struct {
 	Database *gorm.DB
 }
 
-func (c TasksController) GetTasks(w http.ResponseWriter, r *http.Request) {
+func (c TaskController) GetTasks(w http.ResponseWriter, r *http.Request) {
 	var tasks []entity.Task
 	err := c.Database.Model(&entity.Task{}).Preload("History").Find(&tasks).Error
 	if err != nil {
@@ -29,7 +29,7 @@ func (c TasksController) GetTasks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(util.TasksToApiModel(tasks))
 }
 
-func (c TasksController) GetTask(w http.ResponseWriter, r *http.Request) {
+func (c TaskController) GetTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	taskId, err := uuid.Parse(params["id"])
 	if err != nil {
@@ -46,7 +46,7 @@ func (c TasksController) GetTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
 }
 
-func (c TasksController) CreateTask(w http.ResponseWriter, r *http.Request) {
+func (c TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	var request dto.CreateTaskRequest
 	body, _ := io.ReadAll(r.Body)
 	err := json.Unmarshal(body, &request)
@@ -69,7 +69,7 @@ func (c TasksController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
 }
 
-func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
+func (c TaskController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	taskId, err := uuid.Parse(params["id"])
 	if err != nil {
@@ -94,7 +94,7 @@ func (c TasksController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
 }
 
-func (c TasksController) DeleteTask(w http.ResponseWriter, r *http.Request) {
+func (c TaskController) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	taskId, err := uuid.Parse(params["id"])
 	if err != nil {
@@ -106,7 +106,7 @@ func (c TasksController) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (c TasksController) DeleteTaskHistory(w http.ResponseWriter, r *http.Request) {
+func (c TaskController) DeleteTaskHistory(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	taskHistoryId, err := uuid.Parse(params["id"])
 	if err != nil {
@@ -118,7 +118,7 @@ func (c TasksController) DeleteTaskHistory(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusOK)
 }
 
-func (c TasksController) getTask(taskId uuid.UUID) (entity.Task, error) {
+func (c TaskController) getTask(taskId uuid.UUID) (entity.Task, error) {
 	var task entity.Task
 	err := c.Database.Model(&entity.Task{}).Preload("History").Take(&task, taskId).Error
 	return task, err

@@ -34,7 +34,7 @@ func main() {
 		panic("failed to migrate schema")
 	}
 
-	ctrl := controller.TasksController{Database: db}
+	ctrl := controller.TaskController{Database: db}
 	router.HandleFunc("/tasks", ctrl.GetTasks).Methods("GET")
 	router.HandleFunc("/tasks/{id}", ctrl.GetTask).Methods("GET")
 	router.HandleFunc("/tasks", ctrl.CreateTask).Methods("POST")
