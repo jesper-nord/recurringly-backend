@@ -27,11 +27,15 @@ func main() {
 	// migrate schemas
 	err = db.AutoMigrate(&entity.Task{})
 	if err != nil {
-		panic("failed to migrate schema")
+		panic("failed to migrate schema: 'task'")
 	}
 	err = db.AutoMigrate(&entity.TaskHistory{})
 	if err != nil {
-		panic("failed to migrate schema")
+		panic("failed to migrate schema: 'taskHistory'")
+	}
+	err = db.AutoMigrate(&entity.User{})
+	if err != nil {
+		panic("failed to migrate schema: 'user'")
 	}
 
 	ctrl := controller.TaskController{Database: db}
@@ -41,6 +45,9 @@ func main() {
 	router.HandleFunc("/tasks/{id}", ctrl.CompleteTask).Methods("PUT")
 	router.HandleFunc("/tasks/{id}", ctrl.DeleteTask).Methods("DELETE")
 	router.HandleFunc("/tasks/history/{id}", ctrl.DeleteTaskHistory).Methods("DELETE")
+	authCtrl := controller.AuthController{Database: db}
+	router.HandleFunc("/login", authCtrl.Login).Methods("POST")
+	router.HandleFunc("/register", authCtrl.Register).Methods("POST")
 
 	handler := cors.Default().Handler(router)
 	log.Fatal(http.ListenAndServe(":8090", handler))

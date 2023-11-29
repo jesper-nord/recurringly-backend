@@ -24,3 +24,9 @@ type TaskHistory struct {
 	CompletedAt time.Time
 	TaskID      uuid.UUID
 }
+
+type User struct {
+	Model
+	Email    string
+	Password string
+}
