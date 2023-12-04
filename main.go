@@ -16,7 +16,6 @@ import (
 
 func main() {
 	_ = godotenv.Load()
-	router := mux.NewRouter()
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=postgres sslmode=disable", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"))
 	db, err := gorm.Open(postgres.Open(dsn))
@@ -38,17 +37,23 @@ func main() {
 		panic("failed to migrate schema: 'user'")
 	}
 
-	ctrl := controller.TaskController{Database: db}
-	router.HandleFunc("/tasks", ctrl.GetTasks).Methods("GET")
-	router.HandleFunc("/tasks/{id}", ctrl.GetTask).Methods("GET")
-	router.HandleFunc("/tasks", ctrl.CreateTask).Methods("POST")
-	router.HandleFunc("/tasks/{id}", ctrl.CompleteTask).Methods("PUT")
-	router.HandleFunc("/tasks/{id}", ctrl.DeleteTask).Methods("DELETE")
-	router.HandleFunc("/tasks/history/{id}", ctrl.DeleteTaskHistory).Methods("DELETE")
+	defaultRouter := mux.NewRouter()
 	authCtrl := controller.AuthController{Database: db}
-	router.HandleFunc("/login", authCtrl.Login).Methods("POST")
-	router.HandleFunc("/register", authCtrl.Register).Methods("POST")
+	defaultRouter.HandleFunc("/api/login", authCtrl.Login).Methods("POST")
+	defaultRouter.HandleFunc("/api/register", authCtrl.Register).Methods("POST")
 
-	handler := cors.Default().Handler(router)
+	authRouter := defaultRouter.PathPrefix("/api/auth").Subrouter()
+	authRouter.Use(controller.JwtMiddleware)
+	authRouter.HandleFunc("/refresh", authCtrl.RefreshToken).Methods("POST")
+
+	ctrl := controller.TaskController{Database: db}
+	authRouter.HandleFunc("/tasks", ctrl.GetTasks).Methods("GET")
+	authRouter.HandleFunc("/tasks/{id}", ctrl.GetTask).Methods("GET")
+	authRouter.HandleFunc("/tasks", ctrl.CreateTask).Methods("POST")
+	authRouter.HandleFunc("/tasks/{id}", ctrl.CompleteTask).Methods("PUT")
+	authRouter.HandleFunc("/tasks/{id}", ctrl.DeleteTask).Methods("DELETE")
+	authRouter.HandleFunc("/tasks/history/{id}", ctrl.DeleteTaskHistory).Methods("DELETE")
+
+	handler := cors.Default().Handler(defaultRouter)
 	log.Fatal(http.ListenAndServe(":8090", handler))
 }

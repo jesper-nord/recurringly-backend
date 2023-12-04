@@ -32,7 +32,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	var user entity.User
 	err = c.Database.Model(&entity.User{}).Where("email = ?", strings.ToLower(request.Email)).Take(&user).Error
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
@@ -42,7 +42,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := generateToken(user)
+	tokenPair, err := generateTokenPair(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -50,7 +50,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.LoginResponse{User: util.UserToApiModel(user), Token: token})
+	json.NewEncoder(w).Encode(dto.LoginResponse{User: util.UserToApiModel(user), Tokens: tokenPair})
 }
 
 func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
@@ -84,23 +84,85 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tokenPair, err := generateTokenPair(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(util.UserToApiModel(user))
+	json.NewEncoder(w).Encode(dto.LoginResponse{User: util.UserToApiModel(user), Tokens: tokenPair})
 }
 
-func generateToken(user entity.User) (string, error) {
-	claims := jwt.MapClaims{
+func (c AuthController) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var request dto.RefreshTokenRequest
+	body, _ := io.ReadAll(r.Body)
+	err := json.Unmarshal(body, &request)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	claims := jwt.MapClaims{}
+	token, err := util.ParseJwt(request.RefreshToken, claims)
+	if err != nil || !token.Valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	userId, err := uuid.Parse(claims["sub"].(string))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var user entity.User
+	err = c.Database.Take(&user, userId).Error
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	tokenPair, err := generateTokenPair(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(dto.RefreshTokenResponse{Tokens: tokenPair})
+}
+
+func generateTokenPair(user entity.User) (dto.TokenPair, error) {
+	secret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
+
+	accessClaims := jwt.MapClaims{
 		"sub": user.ID,
 		"exp": time.Now().Add(time.Minute * 15).Unix(),
 		"iat": time.Now().Unix(),
 		"jti": uuid.New().String(),
 	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SIGNING_SECRET")))
+	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
+	accessToken, err := at.SignedString(secret)
 	if err != nil {
-		return "", err
+		return dto.TokenPair{}, err
 	}
-	return tokenString, nil
+
+	refreshClaims := jwt.MapClaims{
+		"sub": user.ID,
+		// should practically never expire
+		"exp": time.Now().Add(time.Hour * 24 * 365 * 10).Unix(),
+	}
+	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+	refreshToken, err := rt.SignedString(secret)
+	if err != nil {
+		return dto.TokenPair{}, err
+	}
+
+	return dto.TokenPair{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }

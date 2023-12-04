@@ -1,6 +1,10 @@
 package util
 
 import (
+	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"net/http"
+	"os"
 	"recurringly-backend/dto"
 	"recurringly-backend/entity"
 	"sort"
@@ -46,4 +50,17 @@ func TaskHistoryToApiModel(history entity.TaskHistory) dto.TaskHistory {
 		ID:          history.ID.String(),
 		CompletedAt: history.CompletedAt,
 	}
+}
+
+func ParseJwt(token string, claims jwt.Claims) (*jwt.Token, error) {
+	return jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("JWT_SIGNING_SECRET")), nil
+	})
+}
+
+func GetUserIdFromRequest(r *http.Request) string {
+	return r.Context().Value("user").(string)
 }

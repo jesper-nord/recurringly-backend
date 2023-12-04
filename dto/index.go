@@ -33,6 +33,19 @@ type RegisterUserRequest struct {
 }
 
 type LoginResponse struct {
-	User  User   `json:"user"`
-	Token string `json:"token"`
+	User   User      `json:"user"`
+	Tokens TokenPair `json:"tokens"`
+}
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+type RefreshTokenResponse struct {
+	Tokens TokenPair `json:"tokens"`
+}
+
+type TokenPair struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
