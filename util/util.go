@@ -26,13 +26,6 @@ func TaskToApiModel(task entity.Task) dto.Task {
 	}
 }
 
-func UserToApiModel(user entity.User) dto.User {
-	return dto.User{
-		ID:    user.ID.String(),
-		Email: user.Email,
-	}
-}
-
 func taskHistoriesToApiModel(history []entity.TaskHistory) []dto.TaskHistory {
 	result := make([]dto.TaskHistory, 0)
 	for _, th := range history {

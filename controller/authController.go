@@ -30,7 +30,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user entity.User
-	err = c.Database.Model(&entity.User{}).Where("email = ?", strings.ToLower(request.Email)).Take(&user).Error
+	err = c.Database.Where("email = ?", strings.ToLower(request.Email)).Take(&user).Error
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -50,7 +50,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.LoginResponse{User: util.UserToApiModel(user), Tokens: tokenPair})
+	json.NewEncoder(w).Encode(dto.LoginResponse{Tokens: tokenPair})
 }
 
 func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +62,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.Database.Model(&entity.User{}).Where("email = ?", strings.ToLower(request.Email)).Take(&entity.User{}).Error
+	err = c.Database.Where("email = ?", strings.ToLower(request.Email)).Take(&entity.User{}).Error
 	if err == nil {
 		w.WriteHeader(http.StatusForbidden)
 		return
@@ -92,7 +92,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.LoginResponse{User: util.UserToApiModel(user), Tokens: tokenPair})
+	json.NewEncoder(w).Encode(dto.LoginResponse{Tokens: tokenPair})
 }
 
 func (c AuthController) RefreshToken(w http.ResponseWriter, r *http.Request) {
@@ -139,10 +139,11 @@ func generateTokenPair(user entity.User) (dto.TokenPair, error) {
 	secret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
 
 	accessClaims := jwt.MapClaims{
-		"sub": user.ID,
-		"exp": time.Now().Add(time.Minute * 15).Unix(),
-		"iat": time.Now().Unix(),
-		"jti": uuid.New().String(),
+		"sub":   user.ID,
+		"email": user.Email,
+		"exp":   time.Now().Add(time.Minute * 15).Unix(),
+		"iat":   time.Now().Unix(),
+		"jti":   uuid.New().String(),
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessToken, err := at.SignedString(secret)

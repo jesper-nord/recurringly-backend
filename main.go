@@ -52,7 +52,7 @@ func main() {
 	authRouter.HandleFunc("/tasks", ctrl.CreateTask).Methods("POST")
 	authRouter.HandleFunc("/tasks/{id}", ctrl.CompleteTask).Methods("PUT")
 	authRouter.HandleFunc("/tasks/{id}", ctrl.DeleteTask).Methods("DELETE")
-	authRouter.HandleFunc("/tasks/history/{id}", ctrl.DeleteTaskHistory).Methods("DELETE")
+	authRouter.HandleFunc("/tasks/{id}/history/{historyId}", ctrl.DeleteTaskHistory).Methods("DELETE")
 
 	handler := cors.Default().Handler(defaultRouter)
 	log.Fatal(http.ListenAndServe(":8090", handler))

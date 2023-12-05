@@ -16,6 +16,7 @@ type Model struct {
 type Task struct {
 	Model
 	Name    string
+	UserID  uuid.UUID
 	History []TaskHistory
 }
 

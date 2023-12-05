@@ -18,8 +18,9 @@ type TaskController struct {
 }
 
 func (c TaskController) GetTasks(w http.ResponseWriter, r *http.Request) {
+	userId := util.GetUserIdFromRequest(r)
 	var tasks []entity.Task
-	err := c.Database.Model(&entity.Task{}).Preload("History").Find(&tasks).Error
+	err := c.Database.Where("user_id = ?", userId).Preload("History").Find(&tasks).Error
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -30,13 +31,14 @@ func (c TaskController) GetTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c TaskController) GetTask(w http.ResponseWriter, r *http.Request) {
+	userId := util.GetUserIdFromRequest(r)
 	params := mux.Vars(r)
 	taskId, err := uuid.Parse(params["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	task, err := c.getTask(taskId)
+	task, err := c.getTask(taskId, userId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -47,16 +49,23 @@ func (c TaskController) GetTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
+	userId, err := uuid.Parse(util.GetUserIdFromRequest(r))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	var request dto.CreateTaskRequest
 	body, _ := io.ReadAll(r.Body)
-	err := json.Unmarshal(body, &request)
+	err = json.Unmarshal(body, &request)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	task := entity.Task{
-		Name: request.Name,
+		Name:   request.Name,
+		UserID: userId,
 	}
 	err = c.Database.Create(&task).Error
 	if err != nil {
@@ -70,13 +79,14 @@ func (c TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c TaskController) CompleteTask(w http.ResponseWriter, r *http.Request) {
+	userId := util.GetUserIdFromRequest(r)
 	params := mux.Vars(r)
 	taskId, err := uuid.Parse(params["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	task, err := c.getTask(taskId)
+	task, err := c.getTask(taskId, userId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -95,31 +105,31 @@ func (c TaskController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c TaskController) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	userId := util.GetUserIdFromRequest(r)
 	params := mux.Vars(r)
-	taskId, err := uuid.Parse(params["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	c.Database.Delete(&entity.Task{}, taskId)
+	c.Database.Where("id = ? AND user_id = ?", params["id"], userId).Delete(&entity.Task{})
 	w.WriteHeader(http.StatusOK)
 }
 
 func (c TaskController) DeleteTaskHistory(w http.ResponseWriter, r *http.Request) {
+	userId := util.GetUserIdFromRequest(r)
 	params := mux.Vars(r)
-	taskHistoryId, err := uuid.Parse(params["id"])
+	taskId := params["id"]
+	taskHistoryId := params["historyId"]
+
+	var task entity.Task
+	err := c.Database.Where("id = ? AND user_id = ?", taskId, userId).Take(&task).Error
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	c.Database.Delete(&entity.TaskHistory{}, taskHistoryId)
+	err = c.Database.Where("id = ? AND task_id = ?", taskHistoryId, taskId).Delete(&entity.TaskHistory{}).Error
 	w.WriteHeader(http.StatusOK)
 }
 
-func (c TaskController) getTask(taskId uuid.UUID) (entity.Task, error) {
+func (c TaskController) getTask(taskId uuid.UUID, userId string) (entity.Task, error) {
 	var task entity.Task
-	err := c.Database.Model(&entity.Task{}).Preload("History").Take(&task, taskId).Error
+	err := c.Database.Where("id = ? AND user_id = ?", taskId.String(), userId).Preload("History").Take(&task).Error
 	return task, err
 }

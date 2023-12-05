@@ -13,11 +13,6 @@ type TaskHistory struct {
 	CompletedAt time.Time `json:"completed_at"`
 }
 
-type User struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-}
-
 type CreateTaskRequest struct {
 	Name string `json:"name"`
 }
@@ -33,7 +28,6 @@ type RegisterUserRequest struct {
 }
 
 type LoginResponse struct {
-	User   User      `json:"user"`
 	Tokens TokenPair `json:"tokens"`
 }
 
