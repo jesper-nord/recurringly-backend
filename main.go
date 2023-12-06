@@ -41,10 +41,10 @@ func main() {
 	authCtrl := controller.AuthController{Database: db}
 	defaultRouter.HandleFunc("/api/login", authCtrl.Login).Methods("POST")
 	defaultRouter.HandleFunc("/api/register", authCtrl.Register).Methods("POST")
+	defaultRouter.HandleFunc("/api/refresh", authCtrl.RefreshToken).Methods("POST")
 
 	authRouter := defaultRouter.PathPrefix("/api/auth").Subrouter()
 	authRouter.Use(controller.JwtMiddleware)
-	authRouter.HandleFunc("/refresh", authCtrl.RefreshToken).Methods("POST")
 
 	ctrl := controller.TaskController{Database: db}
 	authRouter.HandleFunc("/tasks", ctrl.GetTasks).Methods("GET")

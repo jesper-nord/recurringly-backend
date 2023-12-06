@@ -27,15 +27,11 @@ type RegisterUserRequest struct {
 	Password string `json:"password"`
 }
 
-type LoginResponse struct {
-	Tokens TokenPair `json:"tokens"`
-}
-
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-type RefreshTokenResponse struct {
+type AuthResponse struct {
 	Tokens TokenPair `json:"tokens"`
 }
 

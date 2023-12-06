@@ -50,7 +50,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.LoginResponse{Tokens: tokenPair})
+	json.NewEncoder(w).Encode(dto.AuthResponse{Tokens: tokenPair})
 }
 
 func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +92,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.LoginResponse{Tokens: tokenPair})
+	json.NewEncoder(w).Encode(dto.AuthResponse{Tokens: tokenPair})
 }
 
 func (c AuthController) RefreshToken(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +132,7 @@ func (c AuthController) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.RefreshTokenResponse{Tokens: tokenPair})
+	json.NewEncoder(w).Encode(dto.AuthResponse{Tokens: tokenPair})
 }
 
 func generateTokenPair(user entity.User) (dto.TokenPair, error) {
