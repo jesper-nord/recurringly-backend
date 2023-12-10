@@ -1,6 +1,8 @@
 package dto
 
-import "time"
+import (
+	"time"
+)
 
 type Task struct {
 	ID      string        `json:"id"`
@@ -15,6 +17,10 @@ type TaskHistory struct {
 
 type CreateTaskRequest struct {
 	Name string `json:"name"`
+}
+
+type EditTaskHistoryRequest struct {
+	CompletedAt time.Time `json:"completed_at"`
 }
 
 type LoginRequest struct {

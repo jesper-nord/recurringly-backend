@@ -33,11 +33,8 @@ func (c TaskController) GetTasks(w http.ResponseWriter, r *http.Request) {
 func (c TaskController) GetTask(w http.ResponseWriter, r *http.Request) {
 	userId := util.GetUserIdFromRequest(r)
 	params := mux.Vars(r)
-	taskId, err := uuid.Parse(params["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	taskId := params["id"]
+
 	task, err := c.getTask(taskId, userId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -86,15 +83,11 @@ func (c TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 func (c TaskController) EditTask(w http.ResponseWriter, r *http.Request) {
 	userId := util.GetUserIdFromRequest(r)
 	params := mux.Vars(r)
-	taskId, err := uuid.Parse(params["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	taskId := params["id"]
 
 	var request dto.CreateTaskRequest
 	body, _ := io.ReadAll(r.Body)
-	err = json.Unmarshal(body, &request)
+	err := json.Unmarshal(body, &request)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -126,11 +119,8 @@ func (c TaskController) EditTask(w http.ResponseWriter, r *http.Request) {
 func (c TaskController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 	userId := util.GetUserIdFromRequest(r)
 	params := mux.Vars(r)
-	taskId, err := uuid.Parse(params["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	taskId := params["id"]
+
 	task, err := c.getTask(taskId, userId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -156,6 +146,35 @@ func (c TaskController) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (c TaskController) EditTaskHistory(w http.ResponseWriter, r *http.Request) {
+	userId := util.GetUserIdFromRequest(r)
+	params := mux.Vars(r)
+	taskId := params["id"]
+	taskHistoryId := params["historyId"]
+
+	var request dto.EditTaskHistoryRequest
+	body, _ := io.ReadAll(r.Body)
+	err := json.Unmarshal(body, &request)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	_, err = c.getTask(taskId, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	err = c.Database.Model(&entity.TaskHistory{}).Where("id = ? AND task_id = ?", taskHistoryId, taskId).Update("completed_at", request.CompletedAt).Error
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (c TaskController) DeleteTaskHistory(w http.ResponseWriter, r *http.Request) {
 	userId := util.GetUserIdFromRequest(r)
 	params := mux.Vars(r)
@@ -173,8 +192,8 @@ func (c TaskController) DeleteTaskHistory(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
-func (c TaskController) getTask(taskId uuid.UUID, userId string) (entity.Task, error) {
+func (c TaskController) getTask(taskId string, userId string) (entity.Task, error) {
 	var task entity.Task
-	err := c.Database.Where("id = ? AND user_id = ?", taskId.String(), userId).Preload("History").Take(&task).Error
+	err := c.Database.Where("id = ? AND user_id = ?", taskId, userId).Preload("History").Take(&task).Error
 	return task, err
 }
