@@ -63,6 +63,11 @@ func (c TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(request.Name) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	task := entity.Task{
 		Name:   request.Name,
 		UserID: userId,
@@ -75,6 +80,46 @@ func (c TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
+}
+
+func (c TaskController) EditTask(w http.ResponseWriter, r *http.Request) {
+	userId := util.GetUserIdFromRequest(r)
+	params := mux.Vars(r)
+	taskId, err := uuid.Parse(params["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var request dto.CreateTaskRequest
+	body, _ := io.ReadAll(r.Body)
+	err = json.Unmarshal(body, &request)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if len(request.Name) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	task, err := c.getTask(taskId, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	task.Name = request.Name
+	err = c.Database.Save(task).Error
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
 }
 

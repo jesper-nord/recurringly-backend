@@ -50,7 +50,8 @@ func main() {
 	authRouter.HandleFunc("/tasks", ctrl.GetTasks).Methods("GET")
 	authRouter.HandleFunc("/tasks/{id}", ctrl.GetTask).Methods("GET")
 	authRouter.HandleFunc("/tasks", ctrl.CreateTask).Methods("POST")
-	authRouter.HandleFunc("/tasks/{id}", ctrl.CompleteTask).Methods("PUT")
+	authRouter.HandleFunc("/tasks/{id}", ctrl.EditTask).Methods("PUT")
+	authRouter.HandleFunc("/tasks/{id}/complete", ctrl.CompleteTask).Methods("POST")
 	authRouter.HandleFunc("/tasks/{id}", ctrl.DeleteTask).Methods("DELETE")
 	authRouter.HandleFunc("/tasks/{id}/history/{historyId}", ctrl.DeleteTaskHistory).Methods("DELETE")
 
