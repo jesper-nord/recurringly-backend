@@ -2,7 +2,7 @@ package util
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jesper-nord/recurringly-backend/dto"
 	"github.com/jesper-nord/recurringly-backend/entity"
 	"net/http"

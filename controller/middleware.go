@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jesper-nord/recurringly-backend/util"
 	"log"
