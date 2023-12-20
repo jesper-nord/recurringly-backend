@@ -1,4 +1,4 @@
-module recurringly-backend
+module github.com/jesper-nord/recurringly-backend
 
 go 1.21
 

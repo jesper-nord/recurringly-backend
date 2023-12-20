@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/jesper-nord/recurringly-backend/dto"
+	"github.com/jesper-nord/recurringly-backend/entity"
+	"github.com/jesper-nord/recurringly-backend/util"
 	"gorm.io/gorm"
 	"io"
 	"net/http"
-	"recurringly-backend/dto"
-	"recurringly-backend/entity"
-	"recurringly-backend/util"
 	"time"
 )
 

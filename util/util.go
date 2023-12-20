@@ -3,10 +3,10 @@ package util
 import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/jesper-nord/recurringly-backend/dto"
+	"github.com/jesper-nord/recurringly-backend/entity"
 	"net/http"
 	"os"
-	"recurringly-backend/dto"
-	"recurringly-backend/entity"
 	"sort"
 )
 

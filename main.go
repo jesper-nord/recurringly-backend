@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/jesper-nord/recurringly-backend/controller"
+	"github.com/jesper-nord/recurringly-backend/entity"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
@@ -10,8 +12,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"recurringly-backend/controller"
-	"recurringly-backend/entity"
 )
 
 func main() {

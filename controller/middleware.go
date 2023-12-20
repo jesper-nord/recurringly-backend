@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
+	"github.com/jesper-nord/recurringly-backend/util"
 	"log"
 	"net/http"
-	"recurringly-backend/util"
 	"strings"
 )
 
