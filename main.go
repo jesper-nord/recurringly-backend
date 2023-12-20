@@ -17,7 +17,13 @@ import (
 func main() {
 	_ = godotenv.Load()
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=postgres sslmode=disable", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"))
+	dbHost := getEnv("DB_HOST", "localhost")
+	dbPort := getEnv("DB_PORT", "5432")
+	dbName := getEnv("DB_NAME", "postgres")
+	dbUser := os.Getenv("DB_USERNAME")
+	dbPass := os.Getenv("DB_PASSWORD")
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPass, dbName)
 	db, err := gorm.Open(postgres.Open(dsn))
 	if err != nil {
 		panic("failed to connect to database")
@@ -56,6 +62,14 @@ func main() {
 	authRouter.HandleFunc("/tasks/{id}/history/{historyId}", ctrl.EditTaskHistory).Methods("PUT")
 	authRouter.HandleFunc("/tasks/{id}/history/{historyId}", ctrl.DeleteTaskHistory).Methods("DELETE")
 
+	port := getEnv("PORT", "8090")
 	handler := cors.Default().Handler(defaultRouter)
-	log.Fatal(http.ListenAndServe(":8090", handler))
+	log.Fatal(http.ListenAndServe(":"+port, handler))
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
