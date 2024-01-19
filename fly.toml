@@ -12,6 +12,9 @@ primary_region = "arn"
 
 [env]
   PORT = "8080"
+  DB_HOST = "recurringly-postres.flycast"
+  DB_PORT = 5432
+  DB_NAME = "recurringly_backend"
 
 [http_service]
   internal_port = 8080
