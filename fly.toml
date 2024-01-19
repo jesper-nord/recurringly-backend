@@ -12,7 +12,7 @@ primary_region = "arn"
 
 [env]
   PORT = "8080"
-  DB_HOST = "recurringly-postres.flycast"
+  DB_HOST = "recurringly-postgres.flycast"
   DB_PORT = 5432
   DB_NAME = "recurringly_backend"
 
