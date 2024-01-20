@@ -28,6 +28,6 @@ type TaskHistory struct {
 
 type User struct {
 	Model
-	Email    string
+	Username string
 	Password string
 }

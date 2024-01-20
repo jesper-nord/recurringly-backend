@@ -31,7 +31,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user entity.User
-	err = c.Database.Where("email = ?", strings.ToLower(request.Email)).Take(&user).Error
+	err = c.Database.Where("username = ?", strings.ToLower(request.Username)).Take(&user).Error
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -64,7 +64,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.Database.Where("email = ?", strings.ToLower(request.Email)).Take(&entity.User{}).Error
+	err = c.Database.Where("username = ?", strings.ToLower(request.Username)).Take(&entity.User{}).Error
 	if err == nil {
 		w.WriteHeader(http.StatusForbidden)
 		return
@@ -77,7 +77,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := entity.User{
-		Email:    strings.ToLower(request.Email),
+		Username: strings.ToLower(request.Username),
 		Password: string(password),
 	}
 	err = c.Database.Create(&user).Error
@@ -92,7 +92,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("registered: user '%s' with email '%s'", user.ID.String(), user.Email)
+	log.Printf("registered: user '%s' with username '%s'", user.ID.String(), user.Username)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dto.AuthResponse{Tokens: tokenPair})
@@ -142,11 +142,11 @@ func generateTokenPair(user entity.User) (dto.TokenPair, error) {
 	secret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
 
 	accessClaims := jwt.MapClaims{
-		"sub":   user.ID,
-		"email": user.Email,
-		"exp":   time.Now().Add(time.Minute * 15).Unix(),
-		"iat":   time.Now().Unix(),
-		"jti":   uuid.New().String(),
+		"sub":      user.ID,
+		"username": user.Username,
+		"exp":      time.Now().Add(time.Minute * 15).Unix(),
+		"iat":      time.Now().Unix(),
+		"jti":      uuid.New().String(),
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessToken, err := at.SignedString(secret)
