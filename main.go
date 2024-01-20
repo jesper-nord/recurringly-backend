@@ -63,7 +63,12 @@ func main() {
 	authRouter.HandleFunc("/tasks/{id}/history/{historyId}", ctrl.DeleteTaskHistory).Methods("DELETE")
 
 	port := getEnv("PORT", "8090")
-	handler := cors.Default().Handler(defaultRouter)
+	clientHost := getEnv("CLIENT_HOST", "localhost:3000")
+	handler := cors.New(cors.Options{
+		AllowedOrigins:   []string{clientHost},
+		AllowedMethods:   []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete, http.MethodHead},
+		AllowCredentials: true,
+	}).Handler(defaultRouter)
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
 
