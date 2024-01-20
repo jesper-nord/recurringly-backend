@@ -6,7 +6,6 @@ import (
 	"github.com/jesper-nord/recurringly-backend/controller"
 	"github.com/jesper-nord/recurringly-backend/entity"
 	"github.com/joho/godotenv"
-	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -48,9 +47,11 @@ func main() {
 	defaultRouter.HandleFunc("/api/login", authCtrl.Login).Methods("POST")
 	defaultRouter.HandleFunc("/api/register", authCtrl.Register).Methods("POST")
 	defaultRouter.HandleFunc("/api/refresh", authCtrl.RefreshToken).Methods("POST")
+	defaultRouter.Use(controller.CorsMiddleware)
 
 	authRouter := defaultRouter.PathPrefix("/api/auth").Subrouter()
 	authRouter.Use(controller.JwtMiddleware)
+	authRouter.Use(controller.CorsMiddleware)
 
 	ctrl := controller.TaskController{Database: db}
 	authRouter.HandleFunc("/tasks", ctrl.GetTasks).Methods("GET")
@@ -63,13 +64,8 @@ func main() {
 	authRouter.HandleFunc("/tasks/{id}/history/{historyId}", ctrl.DeleteTaskHistory).Methods("DELETE")
 
 	port := getEnv("PORT", "8090")
-	clientHost := getEnv("CLIENT_HOST", "localhost:3000")
-	handler := cors.New(cors.Options{
-		AllowedOrigins:   []string{clientHost},
-		AllowedMethods:   []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete, http.MethodHead},
-		AllowCredentials: true,
-	}).Handler(defaultRouter)
-	log.Fatal(http.ListenAndServe(":"+port, handler))
+
+	log.Fatal(http.ListenAndServe(":"+port, defaultRouter))
 }
 
 func getEnv(key, fallback string) string {
