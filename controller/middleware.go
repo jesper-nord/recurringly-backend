@@ -5,7 +5,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jesper-nord/recurringly-backend/util"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -32,7 +31,6 @@ func JwtMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		log.Printf("authenticated user %s", userId.String())
 		ctx := context.WithValue(r.Context(), "user", userId.String())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

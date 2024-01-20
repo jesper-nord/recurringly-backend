@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -48,6 +49,7 @@ func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("logged in: user '%s'", user.ID.String())
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dto.AuthResponse{Tokens: tokenPair})
@@ -90,6 +92,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("registered: user '%s' with email '%s'", user.ID.String(), user.Email)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dto.AuthResponse{Tokens: tokenPair})

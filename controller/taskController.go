@@ -9,6 +9,7 @@ import (
 	"github.com/jesper-nord/recurringly-backend/util"
 	"gorm.io/gorm"
 	"io"
+	"log"
 	"net/http"
 	"time"
 )
@@ -75,6 +76,7 @@ func (c TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("created task: '%s' for user '%s'", task.ID.String(), userId)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
@@ -111,6 +113,7 @@ func (c TaskController) EditTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("updated task: '%s' for user '%s'", task.ID.String(), userId)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
@@ -134,6 +137,7 @@ func (c TaskController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("completed task: '%s' for user '%s'", task.ID.String(), userId)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(util.TaskToApiModel(task))
@@ -141,8 +145,9 @@ func (c TaskController) CompleteTask(w http.ResponseWriter, r *http.Request) {
 
 func (c TaskController) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	userId := util.GetUserIdFromRequest(r)
-	params := mux.Vars(r)
-	c.Database.Where("id = ? AND user_id = ?", params["id"], userId).Delete(&entity.Task{})
+	taskId := mux.Vars(r)["id"]
+	c.Database.Where("id = ? AND user_id = ?", taskId, userId).Delete(&entity.Task{})
+	log.Printf("deleted task: '%s' for user '%s'", taskId, userId)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -172,6 +177,7 @@ func (c TaskController) EditTaskHistory(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	log.Printf("updated task history: '%s' in task '%s' for user '%s'", taskHistoryId, taskId, userId)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -189,6 +195,8 @@ func (c TaskController) DeleteTaskHistory(w http.ResponseWriter, r *http.Request
 	}
 
 	err = c.Database.Where("id = ? AND task_id = ?", taskHistoryId, taskId).Delete(&entity.TaskHistory{}).Error
+
+	log.Printf("deleted task history: '%s' in task '%s' for user '%s'", taskHistoryId, taskId, userId)
 	w.WriteHeader(http.StatusOK)
 }
 
