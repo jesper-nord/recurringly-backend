@@ -15,7 +15,7 @@ primary_region = "arn"
   DB_HOST = "recurringly-postgres.flycast"
   DB_PORT = 5432
   DB_NAME = "recurringly_backend"
-  CLIENT_HOST = "https://strong-sprinkles-e4e729.netlify.app"
+  CLIENT_HOST = "https://recurringly.xyz"
 
 [http_service]
   internal_port = 8080
