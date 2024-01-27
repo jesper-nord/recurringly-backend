@@ -1,8 +1,11 @@
 name: Fly Deploy
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: [ "Build" ]
+    branches: [ "main" ]
+    types:
+      - completed
+
 jobs:
   deploy:
     name: Deploy to prod
