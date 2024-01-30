@@ -5,7 +5,6 @@ import (
 	"github.com/jesper-nord/recurringly-backend/auth"
 	"github.com/jesper-nord/recurringly-backend/task"
 	"github.com/rs/cors"
-	"log"
 	"net/http"
 	"os"
 )
@@ -36,7 +35,6 @@ func New(taskService task.Service, authService auth.Service) http.Handler {
 		AllowedMethods:   []string{http.MethodHead, http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
-		Logger:           log.Default(),
 	})
 
 	return c.Handler(router)

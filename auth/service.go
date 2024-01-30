@@ -7,8 +7,13 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
+)
+
+var (
+	jwtSecret = []byte(os.Getenv("JWT_SIGNING_SECRET"))
 )
 
 type authService struct {
@@ -36,8 +41,8 @@ func (a *authService) Login(username, password string) (*User, TokenPair, error)
 
 func (a *authService) RegisterUser(username, password string) (*User, TokenPair, error) {
 	username = strings.ToLower(username)
-	existing, err := a.Repository.FindUser(username)
-	if existing != nil {
+	_, err := a.Repository.FindUser(username)
+	if err == nil {
 		return nil, TokenPair{}, fmt.Errorf("user already exists: %w", err)
 	}
 
@@ -62,11 +67,15 @@ func (a *authService) RefreshAccessToken(refreshToken string) (TokenPair, error)
 	if err != nil || !token.Valid {
 		return TokenPair{}, errors.New("invalid refresh token")
 	}
-	userId, err := uuid.Parse(claims["sub"].(string))
+	sub, err := claims.GetSubject()
 	if err != nil {
 		return TokenPair{}, err
 	}
-	user, err := a.Repository.GetUser(userId)
+	userId, err := strconv.Atoi(sub)
+	if err != nil {
+		return TokenPair{}, err
+	}
+	user, err := a.Repository.GetUser(UserId(userId))
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -76,28 +85,34 @@ func (a *authService) RefreshAccessToken(refreshToken string) (TokenPair, error)
 }
 
 func (a *authService) generateTokenPair(user *User) (*User, TokenPair, error) {
-	secret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
-
+	env := os.Getenv("APP_ENV")
 	accessClaims := jwt.MapClaims{
-		"sub":      user.ID,
-		"username": user.Username,
-		"exp":      time.Now().Add(time.Minute * 15).Unix(),
-		"iat":      time.Now().Unix(),
-		"jti":      uuid.New().String(),
+		"sub": strconv.Itoa(int(user.ID)),
+		"exp": time.Now().Add(time.Minute * 15).Unix(),
+		"iat": time.Now().Unix(),
+		"nbf": time.Now().Unix(),
+		"aud": "recurringly-" + env,
+		"iss": "recurringly",
+		"jti": uuid.New().String(),
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessToken, err := at.SignedString(secret)
+	accessToken, err := at.SignedString(jwtSecret)
 	if err != nil {
 		return nil, TokenPair{}, err
 	}
 
 	refreshClaims := jwt.MapClaims{
-		"sub": user.ID,
+		"sub": strconv.Itoa(int(user.ID)),
 		// should practically never expire
 		"exp": time.Now().Add(time.Hour * 24 * 365 * 10).Unix(),
+		"iat": time.Now().Unix(),
+		"nbf": time.Now().Unix(),
+		"aud": "recurringly-" + env,
+		"iss": "recurringly",
+		"jti": uuid.New().String(),
 	}
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshToken, err := rt.SignedString(secret)
+	refreshToken, err := rt.SignedString(jwtSecret)
 	if err != nil {
 		return nil, TokenPair{}, err
 	}
@@ -110,9 +125,6 @@ func (a *authService) generateTokenPair(user *User) (*User, TokenPair, error) {
 
 func ParseJwt(token string, claims jwt.Claims) (*jwt.Token, error) {
 	return jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(os.Getenv("JWT_SIGNING_SECRET")), nil
-	})
+		return jwtSecret, nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}))
 }

@@ -3,7 +3,6 @@ package router
 import (
 	"context"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/jesper-nord/recurringly-backend/auth"
 	"net/http"
 	"strings"
@@ -25,13 +24,13 @@ func JwtMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		userId, err := uuid.Parse(claims["sub"].(string))
+		userId, err := claims.GetSubject()
 		if err != nil {
 			http.Error(w, "missing userId", http.StatusUnauthorized)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user", userId.String())
+		ctx := context.WithValue(r.Context(), "user", userId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

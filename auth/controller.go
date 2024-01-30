@@ -26,7 +26,7 @@ func (c Controller) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("logged in: user '%s'", user.ID.String())
+	log.Printf("logged in: user %d", user.ID)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(AuthResponse{Tokens: tokens})
@@ -47,7 +47,7 @@ func (c Controller) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("registered: user '%s' with username '%s'", user.ID.String(), user.Username)
+	log.Printf("registered: user %d with username '%s'", user.ID, user.Username)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(AuthResponse{Tokens: tokens})

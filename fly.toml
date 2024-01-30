@@ -11,6 +11,7 @@ primary_region = "arn"
   buildpacks = ["gcr.io/paketo-buildpacks/go"]
 
 [env]
+  APP_ENV = "prod"
   PORT = "8080"
   DB_HOST = "recurringly-postgres.flycast"
   DB_PORT = 5432

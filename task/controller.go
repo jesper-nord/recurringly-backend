@@ -2,12 +2,13 @@ package task
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/jesper-nord/recurringly-backend/auth"
 	"io"
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 )
 
 type Controller struct {
@@ -15,7 +16,7 @@ type Controller struct {
 }
 
 func (c Controller) GetTasks(w http.ResponseWriter, r *http.Request) {
-	userId := getUserUuidFromRequest(r)
+	userId := getUserIdFromRequest(r)
 	tasks, err := c.Service.GetTasks(userId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -28,8 +29,8 @@ func (c Controller) GetTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c Controller) GetTask(w http.ResponseWriter, r *http.Request) {
-	userId := getUserUuidFromRequest(r)
-	taskId := getId(mux.Vars(r))
+	userId := getUserIdFromRequest(r)
+	taskId := toTaskId(mux.Vars(r)["id"])
 
 	task, err := c.Service.GetTaskById(userId, taskId)
 	if err != nil {
@@ -42,7 +43,7 @@ func (c Controller) GetTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c Controller) CreateTask(w http.ResponseWriter, r *http.Request) {
-	userId := getUserUuidFromRequest(r)
+	userId := getUserIdFromRequest(r)
 	var request CreateTaskRequest
 	body, _ := io.ReadAll(r.Body)
 	err := json.Unmarshal(body, &request)
@@ -57,15 +58,15 @@ func (c Controller) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("created task: '%s' for user '%s'", createdTask.ID.String(), userId)
+	log.Printf("created task: %d for user: %d", createdTask.ID, userId)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(taskToApiModel(createdTask))
 }
 
 func (c Controller) EditTask(w http.ResponseWriter, r *http.Request) {
-	userId := getUserUuidFromRequest(r)
-	taskId := getId(mux.Vars(r))
+	userId := getUserIdFromRequest(r)
+	taskId := toTaskId(mux.Vars(r)["id"])
 
 	var request CreateTaskRequest
 	body, _ := io.ReadAll(r.Body)
@@ -81,15 +82,15 @@ func (c Controller) EditTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("updated task: '%s' for user '%s'", task.ID.String(), userId)
+	log.Printf("updated task: %d for user: %d", task.ID, userId)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(taskToApiModel(task))
 }
 
 func (c Controller) CompleteTask(w http.ResponseWriter, r *http.Request) {
-	userId := getUserUuidFromRequest(r)
-	taskId := getId(mux.Vars(r))
+	userId := getUserIdFromRequest(r)
+	taskId := toTaskId(mux.Vars(r)["id"])
 
 	task, err := c.Service.CompleteTask(userId, taskId)
 	if err != nil {
@@ -97,30 +98,29 @@ func (c Controller) CompleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("completed task: '%s' for user '%s'", task.ID.String(), userId)
+	log.Printf("completed task: %d for user: %d", task.ID, userId)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(taskToApiModel(task))
 }
 
 func (c Controller) DeleteTask(w http.ResponseWriter, r *http.Request) {
-	userId := getUserUuidFromRequest(r)
-	taskId := getId(mux.Vars(r))
+	userId := getUserIdFromRequest(r)
+	taskId := toTaskId(mux.Vars(r)["id"])
 
 	err := c.Service.DeleteTask(userId, taskId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	log.Printf("deleted task: '%s' for user '%s'", taskId, userId)
+	log.Printf("deleted task: %d for user: %d", taskId, userId)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (c Controller) EditTaskHistory(w http.ResponseWriter, r *http.Request) {
-	userId := getUserUuidFromRequest(r)
-	params := mux.Vars(r)
-	taskId := getId(params)
-	taskHistoryId := getUuid("historyId", params)
+	userId := getUserIdFromRequest(r)
+	taskId := toTaskId(mux.Vars(r)["id"])
+	taskHistoryId := toTaskHistoryId(mux.Vars(r)["historyId"])
 
 	var request EditTaskHistoryRequest
 	body, _ := io.ReadAll(r.Body)
@@ -136,15 +136,14 @@ func (c Controller) EditTaskHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("updated task history: '%s' in task '%s' for user '%s'", taskHistoryId, taskId, userId)
+	log.Printf("updated task history: %d in task: %d for user: %d", taskHistoryId, taskId, userId)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (c Controller) DeleteTaskHistory(w http.ResponseWriter, r *http.Request) {
-	userId := getUserUuidFromRequest(r)
-	params := mux.Vars(r)
-	taskId := getId(params)
-	taskHistoryId := getUuid("historyId", params)
+	userId := getUserIdFromRequest(r)
+	taskId := toTaskId(mux.Vars(r)["id"])
+	taskHistoryId := toTaskHistoryId(mux.Vars(r)["historyId"])
 
 	err := c.Service.DeleteTaskHistory(userId, taskId, taskHistoryId)
 	if err != nil {
@@ -152,22 +151,26 @@ func (c Controller) DeleteTaskHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("deleted task history: '%s' in task '%s' for user '%s'", taskHistoryId, taskId, userId)
+	log.Printf("deleted task history: %d in task: %d for user: %d", taskHistoryId, taskId, userId)
 	w.WriteHeader(http.StatusOK)
 }
 
-func getUserUuidFromRequest(r *http.Request) uuid.UUID {
-	parsed, _ := uuid.Parse(r.Context().Value("user").(string))
+func getUserIdFromRequest(r *http.Request) auth.UserId {
+	id, _ := strconv.Atoi(r.Context().Value("user").(string))
+	return auth.UserId(id)
+}
+
+func toTaskId(s string) TaskId {
+	return TaskId(parseUint(s))
+}
+
+func toTaskHistoryId(s string) TaskHistoryId {
+	return TaskHistoryId(parseUint(s))
+}
+
+func parseUint(s string) uint64 {
+	parsed, _ := strconv.ParseUint(s, 10, 32)
 	return parsed
-}
-
-func getId(params map[string]string) uuid.UUID {
-	return getUuid("id", params)
-}
-
-func getUuid(name string, params map[string]string) uuid.UUID {
-	id, _ := uuid.Parse(params[name])
-	return id
 }
 
 func tasksToApiModel(tasks []Task) []ApiTask {
@@ -180,7 +183,7 @@ func tasksToApiModel(tasks []Task) []ApiTask {
 
 func taskToApiModel(task *Task) ApiTask {
 	return ApiTask{
-		ID:      task.ID.String(),
+		ID:      task.ID,
 		Name:    task.Name,
 		History: taskHistoriesToApiModel(task.History),
 	}
@@ -200,7 +203,7 @@ func taskHistoriesToApiModel(history []TaskHistory) []ApiTaskHistory {
 
 func taskHistoryToApiModel(history TaskHistory) ApiTaskHistory {
 	return ApiTaskHistory{
-		ID:          history.ID.String(),
+		ID:          history.ID,
 		CompletedAt: history.CompletedAt,
 	}
 }

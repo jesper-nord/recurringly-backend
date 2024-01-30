@@ -1,14 +1,12 @@
 package auth
 
 import (
-	"errors"
-	"github.com/jesper-nord/recurringly-backend/domain"
 	"gorm.io/gorm"
 )
 
 type User struct {
-	domain.Model
-	Username string
+	gorm.Model
+	Username string `gorm:"index:idx_username"`
 	Password string
 }
 
@@ -39,5 +37,5 @@ func (a *authRepository) SaveUser(user *User) (*User, error) {
 }
 
 func (a *authRepository) Migrate() error {
-	return errors.Join(a.Database.AutoMigrate(&User{}))
+	return a.Database.AutoMigrate(&User{})
 }

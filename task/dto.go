@@ -5,13 +5,13 @@ import (
 )
 
 type ApiTask struct {
-	ID      string           `json:"id"`
+	ID      uint             `json:"id"`
 	Name    string           `json:"name"`
 	History []ApiTaskHistory `json:"history"`
 }
 
 type ApiTaskHistory struct {
-	ID          string    `json:"id"`
+	ID          uint      `json:"id"`
 	CompletedAt time.Time `json:"completed_at"`
 }
 

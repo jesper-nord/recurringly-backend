@@ -31,7 +31,7 @@ func (t *taskService) CreateTask(userId auth.UserId, name string) (*Task, error)
 
 	task := Task{
 		Name:   name,
-		UserID: userId,
+		UserID: uint(userId),
 	}
 	return t.taskRepository.SaveTask(&task)
 }

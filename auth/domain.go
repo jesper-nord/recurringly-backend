@@ -1,10 +1,6 @@
 package auth
 
-import (
-	"github.com/google/uuid"
-)
-
-type UserId = uuid.UUID
+type UserId uint
 
 type Service interface {
 	Login(username, password string) (*User, TokenPair, error)

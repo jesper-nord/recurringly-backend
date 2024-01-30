@@ -1,25 +1,22 @@
 package task
 
 import (
-	"errors"
-	"github.com/google/uuid"
 	"github.com/jesper-nord/recurringly-backend/auth"
-	"github.com/jesper-nord/recurringly-backend/domain"
 	"gorm.io/gorm"
 	"time"
 )
 
 type Task struct {
-	domain.Model
+	gorm.Model
 	Name    string
-	UserID  uuid.UUID
+	UserID  uint
 	History []TaskHistory
 }
 
 type TaskHistory struct {
-	domain.Model
+	gorm.Model
 	CompletedAt time.Time
-	TaskID      uuid.UUID
+	TaskID      uint
 }
 
 type taskRepository struct {
@@ -34,13 +31,13 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (t *taskRepository) FindOneTask(userId auth.UserId, taskId TaskId) (*Task, error) {
 	var task Task
-	err := t.Database.Where("id = ? AND user_id = ?", taskId.String(), userId.String()).Preload("History").Take(&task).Error
+	err := t.Database.Where("id = ? AND user_id = ?", taskId, userId).Preload("History").Take(&task).Error
 	return &task, err
 }
 
 func (t *taskRepository) FindAllTasks(user auth.UserId) ([]Task, error) {
 	var tasks []Task
-	err := t.Database.Where("user_id = ?", user.String()).Find(&tasks).Error
+	err := t.Database.Where("user_id = ?", user).Preload("History").Find(&tasks).Error
 	return tasks, err
 }
 
@@ -77,5 +74,5 @@ func (t *taskRepository) DeleteTaskHistory(taskHistory *TaskHistory) error {
 }
 
 func (t *taskRepository) Migrate() error {
-	return errors.Join(t.Database.AutoMigrate(&Task{}), t.Database.AutoMigrate(&TaskHistory{}))
+	return t.Database.AutoMigrate(&Task{}, &TaskHistory{})
 }

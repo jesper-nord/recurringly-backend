@@ -1,13 +1,12 @@
 package task
 
 import (
-	"github.com/google/uuid"
 	"github.com/jesper-nord/recurringly-backend/auth"
 	"time"
 )
 
-type TaskId = uuid.UUID
-type TaskHistoryId = uuid.UUID
+type TaskId uint
+type TaskHistoryId uint
 
 type Service interface {
 	GetTasks(userId auth.UserId) ([]Task, error)
