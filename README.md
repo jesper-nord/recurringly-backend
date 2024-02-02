@@ -2,9 +2,10 @@
 
 The backend service supporting [Recurringly](https://recurringly.xyz).
 
-## Development
+## Dependencies
+- Postgres
 
-Requires a Postgres instance running locally.
+## Development
 
 Create an `.env` file in project root:
 
