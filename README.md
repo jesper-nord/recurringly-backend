@@ -6,7 +6,7 @@ The backend service supporting [Recurringly](https://recurringly.xyz).
 
 Requires a Postgres instance running locally.
 
-Create an `.env` file in project root with the following contents:
+Create an `.env` file in project root:
 
 ```
 APP_ENV=local
